@@ -81,10 +81,33 @@ assumptions can't leak into the check. Per-feature memory (where the code lives 
 a hash of the requirement) is stored in `.claude/verify/<name>/source.lock`, so
 re-runs are instant and a changed requirement automatically rebuilds its tests.
 
+## Security checks (the "friendly hacker")
+
+When a requirement touches login, money, or private data, `/req` asks a few plain
+questions (most importantly *"who is allowed to see what?"*) and saves your
+answers as part of the requirement. Litmus then writes **attack tests** and runs
+them — trying to break in the way a security researcher would:
+
+- malicious input (injection / script / path tricks) → must be rejected
+- private pages without a valid login → must be denied
+- one user trying to open **another user's** data (IDOR) → must be blocked
+- passwords / tokens / keys → must never leak into responses or logs
+
+If an attack gets through → **FAIL**. Honest limits, shown clearly:
+
+- access-control tests need you to state *who-sees-what*; if you don't, that
+  check is **MANUAL**, never a silent pass.
+- a dependency scan (`npm audit`) runs as a dated **advisory** that is never
+  counted toward "all clear" (a clean scan is not proof of safety).
+- inherently human flaws (business logic) are marked for human review.
+
+See `example/.claude/verify/account-access/` for a worked run that catches a real
+IDOR + password-leak in a sample login.
+
 ## Status
 
-- **Phase 1 (done):** single-model verification — proven end-to-end (see
-  `example/`).
+- **Phase 1 (done):** single-model verification (functional + security) — proven
+  end-to-end (see `example/`).
 - **Phase 2 (not built):** multiple independent models writing the expected
   behavior, keeping what they agree on and routing disagreements to the user.
   Add it only if it measurably catches bugs the single model missed.

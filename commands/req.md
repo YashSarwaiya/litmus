@@ -44,6 +44,10 @@ $ARGUMENTS
    ## Clarifications
 
    _(none yet)_
+
+   ## Security expectations
+
+   _(none — not security-sensitive, or security check not requested)_
    ```
 
 3. Launch the `requirement-auditor` agent and pass it ONLY the path to the spec
@@ -55,14 +59,31 @@ $ARGUMENTS
    **verbatim** under the `## Clarifications` section — append only; never edit
    the original requirement text above it.
 
-5. When there are no blocking ambiguities (or the user is satisfied that the
+5. **Security capture (only when relevant).** If the verbatim requirement
+   contains any security trigger word — login, sign in, auth, user, account,
+   password, token, session, upload, admin, role, payment, billing, email,
+   private, secret, key, API — then ask the user, in plain words: "This touches
+   logins / data / secrets — want me to also check basic security?" If they say
+   no, skip. If yes, ask 2–4 simple questions and append their answers
+   **verbatim** under `## Security expectations`:
+   - "Is there login / are there pages only some people should see?"
+   - "**Who is allowed to see what?** (e.g. a user sees only their own data)" —
+     ask this whenever there is login or private data; it is the one security
+     rule that cannot be guessed from the code, so without it access-control can
+     only be a manual check, never an automatic pass.
+   - "Any secrets / keys / passwords involved?"
+   - "Any field where a user types text?"
+   Keep it plain — no jargon, no threat-model talk. If there are no trigger words
+   (e.g. a plain calculator), do not ask at all.
+
+6. When there are no blocking ambiguities (or the user is satisfied that the
    remaining ones are acceptable), set `status: locked` in the frontmatter.
 
-6. Tell the user the `<slug>` and that once the code is built they can run
+7. Tell the user the `<slug>` and that once the code is built they can run
    `/verify-req <slug>` to check it against this requirement (no file path
    needed — it finds and remembers the code).
 
-7. If a spec with this `<slug>` already existed and you changed it (the user is
+8. If a spec with this `<slug>` already existed and you changed it (the user is
    editing a requirement, not creating a new one), tell them their saved
    verification for this feature is now out of date — the next `/verify-req
    <slug>` or `/verify-all` run will automatically rebuild its tests from the

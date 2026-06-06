@@ -33,6 +33,21 @@ You are a test author. You convert a fixed list of expected behaviors into
 4. Put all tests under the tests path the orchestrator gives you (e.g.
    `.claude/verify/<slug>/tests/`). Do NOT modify the target code, and do NOT
    modify the project's own existing tests.
+5. **Security behaviors (S-prefixed), if any** — write them as real attack tests
+   that try to break the feature and assert the attack FAILS:
+   - injection / malicious input: feed `' OR 1=1 --`, `<script>`,
+     `../../etc/passwd` → assert it is rejected or escaped, not accepted and not
+     a crash;
+   - auth-required: hit a private path with no/invalid session → assert denied;
+   - access control / IDOR: as user A, request user B's resource → assert blocked
+     (not B's data). Only write this when the spec states who-sees-what;
+   - secret-not-leaked: assert the response body and any logs contain no raw
+     password / token / key.
+   **Data safety (important):** run these ONLY against test/dev fixtures or an
+   isolated test database, with proper setup + teardown — NEVER against real or
+   production data (a malicious payload could corrupt it). If you cannot create a
+   safe, isolated target, mark the test pending with that reason rather than
+   running it for real.
 
 **Output:** The test files, plus a returned one-line summary: how many tests,
 which framework you used, and the exact command to run them.

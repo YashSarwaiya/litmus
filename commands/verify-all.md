@@ -55,7 +55,10 @@ The dashboard must never imply everything is fine when it isn't:
   PASS/FAIL/MANUAL/ERROR classification verbatim; never recolor ERROR as FAIL or
   PASS.
 - Overall verdict is **ALL CLEAR only if** there are zero FAIL, zero ERROR, and
-  zero SKIP.
+  zero SKIP — across functional AND security (S-prefixed) behaviors.
+- **Static security advisories never count** toward ALL CLEAR (a dated scan is
+  not a requirement check). A security behavior left MANUAL (e.g. access control
+  with no stated who-sees-what) also blocks ALL CLEAR — it is not a pass.
 
 ## Pipeline
 
@@ -126,16 +129,22 @@ The dashboard must never imply everything is fine when it isn't:
    # Verification Dashboard — <project>
    Verdict: <ALL CLEAR | NEEDS ATTENTION> — A PASS · B FAIL · C ERROR · D SKIP  (N features)
 
-   | Feature | Status | Pass | Fail | Manual | Report |
-   |---------|--------|------|------|--------|--------|
-   | ...     | ❌ FAIL |  8  |  3  |  0 | <slug>/report.md |
-   | ...     | ⚠️ ERROR | – | – |  – | <slug>/report.md |
-   | ...     | 📝 SKIP |  –  |  –  |  – | (draft — run /req) |
-   | ...     | ✅ PASS | 22  |  0  |  1 | <slug>/report.md |
+   | Feature | Status | Pass | Fail | Manual | Security | Report |
+   |---------|--------|------|------|--------|----------|--------|
+   | ...     | ❌ FAIL |  8  |  3  |  0 | ✅ | <slug>/report.md |
+   | ...     | ⚠️ ERROR | – | – |  – | – | <slug>/report.md |
+   | ...     | 📝 SKIP |  –  |  –  |  – | – | (draft — run /req) |
+   | ...     | ✅ PASS | 22  |  0  |  1 | ❌ | <slug>/report.md |
 
    Bottom line: <plain-English summary of what needs attention and what to do>.
    (Nothing was changed.)
    ```
+
+   The **Security** column shows the requirement-derived security behaviors:
+   `✅` all clean · `❌` an attack got through · `needs answer` if who-sees-what
+   was never stated · `–` if the feature isn't security-sensitive. Show any
+   static `npm audit` advisories in a separate dated block BELOW the table that
+   is explicitly excluded from the verdict (a clean scan is not proof of safety).
 
    Use `–` (not `0`) for features that weren't run, so empty cells never read as
    "all good". For each FAIL, include below the table the copy-pasteable

@@ -25,6 +25,17 @@ output — never to modify source files, tests, or any project file.
      verify.
    - **ERROR** — the test itself could not run. Do NOT report this as a code
      failure; report it as a test/environment problem to fix.
+   Security behaviors (S-prefixed) are reported exactly like the others. A
+   security behavior the spec left MANUAL (e.g. access control with no stated
+   who-sees-what) must be shown as MANUAL — never silently treated as PASS.
+4. **Static security advisory (separate, optional, NEVER pass/fail).** If the
+   target project has a `package.json` and `npm audit` is available, run
+   `npm audit` (read-only) and report its findings under a clearly separate block
+   labelled `Security advisory (static, <today's date>)`. This is advisory only:
+   it is NOT a behavior, it is NEVER counted toward PASS, and it NEVER makes the
+   feature "all clear." If `npm audit` (or any scanner) is unavailable, write a
+   neutral one-line "advisory skipped: not installed" — never an ERROR, never an
+   implied clean. Never run any scan against real/production data.
 
 **Distinguish "the code is wrong" from "the test is wrong."** If a failure looks
 like a bad or unfair test rather than a real requirement violation, say so and
@@ -38,5 +49,8 @@ flaky or incorrect test — that false alarm is what makes a checker untrustwort
   requirement parts are unmet.
 - A confidence note flagging anything that might be a checker error rather than a
   code error — this is the human's gate against blindly trusting the checker.
+- If you ran the static advisory, a separate `Security advisory (static, <date>)`
+  block — clearly marked as NOT part of the pass/fail verdict, and noting that a
+  clean scan today is not a guarantee tomorrow (new issues get found over time).
 
 Do not propose code edits. Do not patch. Just report.

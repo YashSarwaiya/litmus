@@ -114,6 +114,11 @@ again, and (b) tell whether the saved tests still match the current requirement.
 
 7. **Surface.** Show the user the report: each behavior as PASS / FAIL /
    MANUAL-CHECK / ERROR, mapped back to the requirement, with failing output.
+   Show security behaviors (S-prefixed) in the same list, and show any static
+   security advisory in its OWN block, clearly marked as NOT a pass/fail. The
+   feature only "matches the requirement" when its functional AND security
+   behaviors are clean (the advisory never counts toward that; a security check
+   left MANUAL is not a pass).
    Do NOT fix anything yourself. If there are real failures, hand the user a
    copy-pasteable summary to take back to the builder chat, for example:
 

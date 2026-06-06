@@ -34,6 +34,21 @@ agent exists to avoid.
      (needs a human, e.g. a subjective visual check). Never drop a manual item —
      record it so it is visible, not forgotten.
 4. Do not invent requirements that aren't there, and do not drop any that are.
+5. **If the spec has a `## Security expectations` section**, also derive
+   **security behaviors** from it — and ONLY from it (still never from the code).
+   Give them `S`-prefixed ids (S1, S2, ...). Typical ones, each only if the
+   stated expectations support it:
+   - reject malicious input (injection / script / path tricks) in user-typed
+     fields → the attack must be refused, not accepted;
+   - require login for anything private (no valid session → denied);
+   - **access control** — one user must not reach another user's data. Emit this
+     as `auto` ONLY if the spec states *who is allowed to see what*. If that rule
+     is NOT stated, emit it with `testability: manual` and the note "who-sees-what
+     not stated — cannot be auto-verified" — NEVER as an `auto` behavior that
+     could turn green. Absence of the rule must never look like a pass.
+   - secrets / passwords / tokens must not appear in responses or logs.
+   Each S-behavior still needs a "Maps to:" quote from the `## Security
+   expectations` text. If that section is empty/absent, produce no S-behaviors.
 
 **Output:** Write the result to the path the orchestrator gives you (e.g.
 `.claude/verify/<slug>/behaviors.md`) as a clear, structured Markdown list using
