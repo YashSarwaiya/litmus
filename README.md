@@ -1,38 +1,94 @@
 # Litmus
 
-An independent litmus test for AI-written code — built entirely from native
-Claude Code commands and subagents, no separate app.
+**An independent check for AI-written code: does it actually do what you asked — and is it safe?**
 
-It checks the code Claude writes against your **original requirement**, using a
-*fresh, independent* checker that doesn't share the builder's assumptions. The
-builder can't pass its own homework.
+Litmus is a small layer you add to [Claude Code](https://docs.claude.com/en/docs/claude-code). After the AI builds a feature, Litmus checks the code against your **original request** — using a *separate, fresh* checker that never saw the AI's reasoning and writes **real, runnable tests**.
 
-## Why
+It's the difference between *"the AI says it's done"* and *"it's actually done."*
 
-When the same chat that writes code also reviews it, it tends to confirm its own
-work — the wrong assumption that caused a bug is still in context during review,
-so the bug slips through. This layer does the check in a fresh context, judged
-against the **user's original requirement**, not the builder's description of what
-it did.
+Built entirely from native Claude Code commands and subagents. No separate app, no service, no extra API keys.
 
-## The five rules it enforces
+---
 
-1. **The user's original requirement is the source of truth.**
-2. **The checker runs in a fresh, independent context** — it never sees the
-   builder's reasoning.
-3. **Expected behavior is derived from the requirement, never the code** (the
-   "bias firewall").
-4. **Verification uses real, executable tests** — not a model eyeballing the code.
-5. **Checking and fixing stay separate** — the checker reports, it never patches.
+## The problem
+
+When the same AI chat that writes the code also checks it, it grades its own homework:
+
+- **It trusts its own assumptions.** The wrong assumption that caused a bug is still in its head during the review — so the bug sails right through.
+- **Its tests mirror the code, not your request.** AI test-writers read the *implementation* and assert "what the code does." If the code is wrong, the test is wrong **in the same way** — and passes. (Researchers call this *confirmation bias* or *"circularity of error."*)
+- **It quietly forgets parts.** Ask for *"a calculator that adds two numbers **and shows the result in red**,"* and if it forgets the red, it also forgets to **test** the red. The dropped part is never checked.
+- **It skips security you didn't think to ask for.** About **45% of AI-generated code ships a known vulnerability** ([Veracode, 2025](https://www.veracode.com/)) — things like one user being able to read another user's data, or a password leaking into a response. You never wrote "block this," so it never gets built *or* tested.
+
+The result: green checkmarks that don't actually mean the feature is right.
+
+## What Litmus does
+
+```
+/req           say what you want, in your own words   ← this becomes the source of truth
+               → build the feature normally
+/verify-req    an independent checker tests the code against your words
+/verify-all    do that for every feature → one dashboard
+```
+
+Under the hood, `/verify-req` runs three fresh helpers, each in an **isolated context** so they can't inherit the builder's assumptions:
+
+1. **behavior-author** reads **only your requirement** — never the code — and lists what the feature *should* do.
+2. **test-author** turns that list into **real, runnable tests**.
+3. **verifier** runs the tests against your actual code and reports **PASS / FAIL / MANUAL / ERROR**. It has no edit tools — it reports, it never patches.
+
+Because the expected behavior comes from *your words* and the checker is *blind to the code*, Litmus catches the two things self-checking misses: **code that is confidently wrong** and **the parts the builder forgot.**
+
+## How it's different
+
+|  | Checks against | How it decides | Sees the code first? | Catches "the code **and** its own tests are both wrong"? |
+|---|---|---|---|---|
+| **AI writing its own tests** (Claude, Copilot, Qodo…) | what the **code does** | runs tests it wrote *from the code* | **Yes** → inherits the code's bugs | ❌ No — the tests mirror the bug |
+| **LLM-as-judge** | a prompt / rubric | a model **eyeballs** it and gives an opinion or score | Usually yes | ❌ No — subjective, no execution, no ground truth |
+| **Litmus** | **your original requirement** | **runs real tests** derived from your words | **No** — the behavior author is blind to the code | ✅ Yes |
+
+### vs. AI writing its own test cases
+Tools that auto-generate tests (including Claude itself, mid-build) write them **by reading the code**. So the tests describe what the code *currently does* — they pass even when the feature is wrong, and they skip whatever the builder forgot. It's a student writing both the questions *and* the answer key.
+
+Litmus writes its tests from your **requirement**, **blind to the code**, in a **fresh context**. It's the teacher grading against the original assignment. (The two aren't enemies — keep the AI's own tests for fast feedback; Litmus is the independent second opinion on top.)
+
+### vs. LLM-as-judge
+An LLM judge *looks* at the code or output and returns a subjective verdict ("looks good, 8/10"). No code is executed, there's no objective ground truth, and a confident-looking-but-wrong answer can talk it into a pass.
+
+Litmus doesn't eyeball. It turns **your requirement** into concrete `input → expected output` cases and **runs them as executable tests**. The verdict is *"this test passed / failed against the real code,"* not *"a model thinks it's fine."*
+
+## Security: a built-in "friendly hacker"
+
+When a requirement touches **login, money, or private data**, `/req` asks a few plain questions — most importantly *"who is allowed to see what?"* — and saves your answers as part of the requirement. Litmus then writes **attack tests** and runs them, trying to break in the way a security researcher would:
+
+- malicious input (injection / script / path tricks) → must be rejected
+- private pages without a valid login → must be denied
+- one user trying to open **another user's** data (IDOR) → must be blocked
+- passwords / tokens / keys → must never leak into responses or logs
+
+If an attack gets through → **FAIL**. With honest limits, shown clearly:
+
+- access-control tests need you to state *who-sees-what*; if you don't, that check is **MANUAL**, never a silent pass.
+- a dependency scan (`npm audit`) runs as a dated **advisory** that is never counted toward "all clear" — a clean scan is not proof of safety.
+- inherently human flaws (business logic) are flagged for human review.
+
+## The rules it never breaks
+
+1. **Your original requirement is the source of truth.**
+2. **The checker runs in a fresh, independent context** — it never sees the builder's reasoning.
+3. **Expected behavior is derived from the requirement, never the code** (the *bias firewall*).
+4. **Verification uses real, executable tests** — not a model's opinion.
+5. **Checking and fixing stay separate** — the checker reports; it never patches.
+
+And one promise on top: **it never shows "all clear" while anything failed, errored, was skipped, or was left unanswered.** No false green.
 
 ## Install
 
-Copy the two folders into your Claude Code config so the commands work in every
-project:
+Litmus is just text files that live in your Claude Code config, so it works in every project.
 
 ```bash
-cp commands/*.md ~/.claude/commands/
-cp agents/*.md   ~/.claude/agents/
+git clone https://github.com/YashSarwaiya/litmus
+cp litmus/commands/*.md ~/.claude/commands/
+cp litmus/agents/*.md   ~/.claude/agents/
 ```
 
 That's it — `/req`, `/verify-req`, and `/verify-all` are now available everywhere.
@@ -40,77 +96,29 @@ That's it — `/req`, `/verify-req`, and `/verify-all` are now available everywh
 ## Use
 
 ```
-1. /req <describe a feature in your own words>   # capture the requirement (it
-                                                 # also audits it for ambiguity)
+1. /req <describe a feature in your own words>   # captures it + audits for ambiguity
 2. build the feature normally
 3. /verify-req <name>                            # check that one feature
    /verify-all                                   # check every feature at once
 ```
 
-If a check fails, it hands you a copy-paste summary to take back to the builder
-chat. Fix, then re-run.
+If a check fails, Litmus hands you a copy-paste summary to take back to your builder chat. Fix it, then re-run. Order is always: **`/req` → build → `/verify`.**
 
-Order is always: **`/req` → build → `/verify`.**
+It remembers where each feature's code lives and re-uses its tests; change a requirement and it automatically rebuilds that feature's tests (it hashes the requirement to know).
 
-## What's in here
+## Honest limits
 
-| Path | What it is |
-|---|---|
-| `commands/req.md` | `/req` — capture the requirement verbatim + ambiguity audit |
-| `commands/verify-req.md` | `/verify-req` — verify one feature |
-| `commands/verify-all.md` | `/verify-all` — verify every feature → one dashboard |
-| `agents/requirement-auditor.md` | Flags vague/untestable parts of a requirement |
-| `agents/behavior-author.md` | Derives expected behavior from the requirement only (never the code) |
-| `agents/test-author.md` | Turns behaviors into runnable tests (reads code only for wiring) |
-| `agents/verifier.md` | Runs the tests, reports pass/fail (no edit tools — can't patch) |
-| `brief.md` | The original idea + design rules + open problems |
+Litmus is a sharp, focused tool — not a magic "is my code perfect" button.
 
-## How it works (under the hood)
+- It tests **what your requirement says.** A vague requirement gives a weak check — which is why `/req` audits for ambiguity *before* anything is generated.
+- **"No bugs found" means no *known* attack or stated behavior failed** — not "provably correct" or "provably secure." It is **not** a replacement for a professional security audit.
+- It runs **one strong model** today. A multi-model cross-check (independent models that must agree) is designed but not yet built.
+- Cross-feature *"breaks when combined"* checks (integration / regression across features) are partially covered by `/verify-all` re-running everything, with deeper interaction checks still on the roadmap.
 
-When you run `/verify-req`:
+## How this relates to existing ideas
 
-1. `behavior-author` reads **only your requirement** and lists what the feature
-   should do.
-2. `test-author` turns that into real test files.
-3. `verifier` runs those tests against your actual code and reports
-   PASS / FAIL / MANUAL-CHECK / ERROR.
+Litmus stands on well-known shoulders, and is honest about it. Spec-first development exists in **GitHub Spec Kit**, **AWS Kiro**, and **BMAD**; independent "critic" review and reference-based test checking exist in research and in tools like **DeepEval** and **promptfoo**; the *"don't let the test see the code"* principle is an active research direction. Litmus's contribution is **wiring those ideas together — requirement-first, fresh-context, executable, security-aware — natively and simply inside Claude Code.**
 
-Each step runs as a fresh subagent (isolated context), so the builder's
-assumptions can't leak into the check. Per-feature memory (where the code lives +
-a hash of the requirement) is stored in `.claude/verify/<name>/source.lock`, so
-re-runs are instant and a changed requirement automatically rebuilds its tests.
+## License
 
-## Security checks (the "friendly hacker")
-
-When a requirement touches login, money, or private data, `/req` asks a few plain
-questions (most importantly *"who is allowed to see what?"*) and saves your
-answers as part of the requirement. Litmus then writes **attack tests** and runs
-them — trying to break in the way a security researcher would:
-
-- malicious input (injection / script / path tricks) → must be rejected
-- private pages without a valid login → must be denied
-- one user trying to open **another user's** data (IDOR) → must be blocked
-- passwords / tokens / keys → must never leak into responses or logs
-
-If an attack gets through → **FAIL**. Honest limits, shown clearly:
-
-- access-control tests need you to state *who-sees-what*; if you don't, that
-  check is **MANUAL**, never a silent pass.
-- a dependency scan (`npm audit`) runs as a dated **advisory** that is never
-  counted toward "all clear" (a clean scan is not proof of safety).
-- inherently human flaws (business logic) are marked for human review.
-
-## Status
-
-- **Phase 1 (done):** single-model verification (functional + security), proven
-  end-to-end in testing.
-- **Phase 2 (not built):** multiple independent models writing the expected
-  behavior, keeping what they agree on and routing disagreements to the user.
-  Add it only if it measurably catches bugs the single model missed.
-
-## Prior art
-
-Spec-first-then-check exists in GitHub Spec Kit, AWS Kiro, and Cursor Plan Mode;
-multi-agent role separation in BMAD-METHOD; reference-based test checking in
-DeepEval and promptfoo. The novel part here is the **independent, requirement-first
-spec + fresh-context executable check** wired natively into Claude Code.
+MIT.
