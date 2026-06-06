@@ -1,7 +1,7 @@
-# Verification Layer
+# Litmus
 
-An independent verification layer for AI-written code, built entirely from native
-Claude Code commands and subagents — no separate app.
+An independent litmus test for AI-written code — built entirely from native
+Claude Code commands and subagents, no separate app.
 
 It checks the code Claude writes against your **original requirement**, using a
 *fresh, independent* checker that doesn't share the builder's assumptions. The
