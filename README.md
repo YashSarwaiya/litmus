@@ -64,7 +64,6 @@ Order is always: **`/req` → build → `/verify`.**
 | `agents/test-author.md` | Turns behaviors into runnable tests (reads code only for wiring) |
 | `agents/verifier.md` | Runs the tests, reports pass/fail (no edit tools — can't patch) |
 | `brief.md` | The original idea + design rules + open problems |
-| `example/` | A worked demo (a calculator) showing the layer catch a missing requirement and pass once fixed |
 
 ## How it works (under the hood)
 
@@ -101,13 +100,10 @@ If an attack gets through → **FAIL**. Honest limits, shown clearly:
   counted toward "all clear" (a clean scan is not proof of safety).
 - inherently human flaws (business logic) are marked for human review.
 
-See `example/.claude/verify/account-access/` for a worked run that catches a real
-IDOR + password-leak in a sample login.
-
 ## Status
 
-- **Phase 1 (done):** single-model verification (functional + security) — proven
-  end-to-end (see `example/`).
+- **Phase 1 (done):** single-model verification (functional + security), proven
+  end-to-end in testing.
 - **Phase 2 (not built):** multiple independent models writing the expected
   behavior, keeping what they agree on and routing disagreements to the user.
   Add it only if it measurably catches bugs the single model missed.
