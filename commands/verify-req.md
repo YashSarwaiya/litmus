@@ -1,6 +1,6 @@
 ---
 description: Independently verify built code against the captured requirement using fresh subagents
-argument-hint: [slug] [optional: file-or-folder | fresh]
+argument-hint: [slug] [optional: file-or-folder | quick|standard|thorough|max | fresh]
 ---
 
 # Independent verification against the requirement
@@ -22,6 +22,11 @@ capture the first requirement now; if yes, walk them into `/req`.
 
 The word `fresh` anywhere in the arguments forces a full rebuild of the
 behaviors and tests (otherwise existing ones are reused when still valid).
+
+A depth word — `quick`, `standard`, `thorough`, or `max` — sets how hard the
+tests probe (default **thorough**). Deeper finds more edge cases; edges that go
+beyond what the requirement states are reported as ⚠️ findings, never as
+failures. Pass it to the `behavior-author` and `test-author` agents.
 
 ## Tone — the "stop early" cases are NOT errors
 
@@ -49,6 +54,7 @@ Each feature keeps a tiny file `.claude/verify/<slug>/source.lock` with:
 - `spec_hash:` the SHA-256 of the spec file's full contents at the time its
   behaviors/tests were last generated.
 - `target:` the confirmed code location(s).
+- `depth:` the depth the tests were generated at (quick/standard/thorough/max).
 - `generated:` when they were generated.
 
 This lets the command (a) remember where the code is, so the user isn't asked
@@ -89,8 +95,9 @@ again, and (b) tell whether the saved tests still match the current requirement.
 3. **Decide: reuse or rebuild.**
    - **Rebuild** (regenerate behaviors + tests) if ANY of: the user passed
      `fresh`; `source.lock` is missing; `behaviors.md` or `tests/` is
-     missing/empty; or the saved `spec_hash` ≠ the current spec hash (the
-     requirement changed since the tests were made).
+     missing/empty; the saved `spec_hash` ≠ the current spec hash (the
+     requirement changed); or the requested depth ≠ the saved `depth` (deeper or
+     shallower run requested).
    - **Otherwise REUSE** the existing behaviors and tests (fast path — the
      normal case when only the code changed, e.g. re-checking after a fix).
 
@@ -102,9 +109,10 @@ again, and (b) tell whether the saved tests still match the current requirement.
 5. **Tests** — only when rebuilding. Launch the `test-author` agent and pass it
    the behaviors file path and the target path(s). It writes runnable tests into
    `.claude/verify/<slug>/tests/`. It may read the code for wiring (signatures,
-   imports, how to invoke) but must NOT change the expected outcomes. After the
-   tests exist, write `.claude/verify/<slug>/source.lock` with the current
-   `spec_hash`, the `target`, and today's date.
+   imports, how to invoke) but must NOT change the expected outcomes. Pass both
+   agents the depth level. After the tests exist, write
+   `.claude/verify/<slug>/source.lock` with the current `spec_hash`, the
+   `target`, the `depth`, and today's date.
 
 6. **Run (checker is not the fixer).** Launch the `verifier` agent and pass it
    the spec path, the behaviors path, the tests path, and the target path(s). It
@@ -115,10 +123,12 @@ again, and (b) tell whether the saved tests still match the current requirement.
 7. **Surface.** Show the user the report: each behavior as PASS / FAIL /
    MANUAL-CHECK / ERROR, mapped back to the requirement, with failing output.
    Show security behaviors (S-prefixed) in the same list, and show any static
-   security advisory in its OWN block, clearly marked as NOT a pass/fail. The
-   feature only "matches the requirement" when its functional AND security
-   behaviors are clean (the advisory never counts toward that; a security check
-   left MANUAL is not a pass).
+   security advisory in its OWN block, clearly marked as NOT a pass/fail. Show any
+   ⚠️ **findings** (failed `probe` behaviors — edge cases beyond what the
+   requirement states) in their OWN block too, clearly marked as "worth a look,
+   not failures." The feature "matches the requirement" when its functional AND
+   security behaviors are clean — findings and the advisory NEVER count toward
+   that, and a security check left MANUAL is not a pass.
    Do NOT fix anything yourself. If there are real failures, hand the user a
    copy-pasteable summary to take back to the builder chat, for example:
 

@@ -1,6 +1,6 @@
 ---
 description: Verify EVERY captured requirement at once and produce one dashboard
-argument-hint: [optional: fresh | specific slugs]
+argument-hint: [optional: quick|standard|thorough|max | fresh | specific slugs]
 ---
 
 # Verify every feature against its requirement
@@ -12,6 +12,9 @@ feature, then rolled up.
 
 Arguments: `$ARGUMENTS`
 - `fresh` → rebuild behaviors + tests for every feature from scratch.
+- a depth word (`quick`/`standard`/`thorough`/`max`, default **thorough**) → how
+  hard to probe; edges beyond the requirement are reported as findings, never
+  failures.
 - one or more `<slug>`s → only verify those features (others are not shown as
   passing — they're simply out of scope for this run).
 - empty → verify all features with the smart default (reuse current tests,
@@ -59,6 +62,10 @@ The dashboard must never imply everything is fine when it isn't:
 - **Static security advisories never count** toward ALL CLEAR (a dated scan is
   not a requirement check). A security behavior left MANUAL (e.g. access control
   with no stated who-sees-what) also blocks ALL CLEAR — it is not a pass.
+- **⚠️ Findings never count** toward ALL CLEAR or toward FAIL. Findings are
+  failed `probe` behaviors — edge cases beyond what the requirement states. They
+  are surfaced for the user to look at, but a feature with only findings (no FAIL)
+  is still PASS.
 
 ## Pipeline
 
@@ -88,8 +95,8 @@ The dashboard must never imply everything is fine when it isn't:
    - Read `.claude/verify/<slug>/source.lock` if present (`spec_hash`, `target`).
      - missing lock, or missing/empty `behaviors.md`/`tests/` → needs a first-run
        build.
-     - saved `spec_hash` ≠ current hash, or `fresh` was passed → **stale** →
-       rebuild.
+     - saved `spec_hash` ≠ current hash, `fresh` was passed, or the requested
+       depth ≠ the saved `depth` → **stale** → rebuild.
      - otherwise → current (reuse tests, just re-run the verifier).
    - Validate the saved `target` path(s) still exist on disk. Missing → the
      feature needs its code location re-resolved (see step 3).
@@ -145,6 +152,11 @@ The dashboard must never imply everything is fine when it isn't:
    was never stated · `–` if the feature isn't security-sensitive. Show any
    static `npm audit` advisories in a separate dated block BELOW the table that
    is explicitly excluded from the verdict (a clean scan is not proof of safety).
+
+   Note the **depth** used in the run header (e.g. "depth: thorough"). If any
+   feature produced ⚠️ findings (failed `probe` edge cases beyond the
+   requirement), add a short "⚠️ Findings to review" block below the table —
+   counted separately, never folded into FAIL or the verdict.
 
    Use `–` (not `0`) for features that weren't run, so empty cells never read as
    "all good". For each FAIL, include below the table the copy-pasteable

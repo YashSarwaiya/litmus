@@ -106,6 +106,29 @@ If a check fails, Litmus hands you a copy-paste summary to take back to your bui
 
 It remembers where each feature's code lives and re-uses its tests; change a requirement and it automatically rebuilds that feature's tests (it hashes the requirement to know).
 
+## Test depth (basic → advanced)
+
+Add a depth word to control how hard Litmus probes (default **thorough**):
+
+```
+/verify-req signup quick       # happy path + the obvious cases
+/verify-req signup standard    # one case per input class + stated edges
+/verify-req signup thorough    # full boundary-value analysis + edge/invalid inputs   (default)
+/verify-req signup max         # thorough + adversarial / fuzz-style inputs
+```
+
+The catch: going deeper risks asserting things you never asked for (the #1 cause
+of bogus AI tests). So Litmus splits every check in two:
+
+- **Stated** — comes straight from your requirement → a hard **PASS / FAIL**.
+- **Probe** — an edge it *inferred* beyond what you said → a ⚠️ **finding**
+  ("worth a look — is this intended?"), **never** a failure, and never counted
+  toward "all clear."
+
+So you get deep coverage **without** false alarms. (Demo: a naive email validator
+passes at `standard` but `thorough` catches 4 real structural bugs — empty local
+part, double `@`, trailing dot — while unstated edges stay findings, not fails.)
+
 ## Honest limits
 
 Litmus is a sharp, focused tool — not a magic "is my code perfect" button.

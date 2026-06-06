@@ -46,6 +46,11 @@ requirement is too ambiguous, vague, or underspecified to be turned into
 - `## Security questions` — ONLY if the requirement is security-sensitive: the
   plain-English questions above (who-sees-what, secret leakage, malicious input).
   Omit this section entirely for non-security features.
+- `## Edge cases worth deciding` — optionally, a few high-value edges the
+  requirement leaves open (e.g. "should ` a@b.com ` with surrounding spaces be
+  accepted or rejected?"). Offer them as questions so the user can choose to make
+  them real rules. Still ASK; never decide for them. Keep this short; omit it if
+  nothing important is open.
 - `## Verdict` — either "Ready to verify" or "Needs clarification".
 
 If the requirement is already fully testable, say so plainly with an empty

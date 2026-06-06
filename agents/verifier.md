@@ -25,6 +25,11 @@ output — never to modify source files, tests, or any project file.
      verify.
    - **ERROR** — the test itself could not run. Do NOT report this as a code
      failure; report it as a test/environment problem to fix.
+   - **FINDING** — a behavior marked `kind: probe` (an edge the requirement never
+     stated) whose assertion did not hold. This is NOT a failure: list it under a
+     separate "⚠️ Findings (beyond the requirement)" heading, and NEVER count it
+     toward FAIL, the verdict, or "all clear." It is a "worth a look / confirm
+     intent" item, not a broken-code verdict.
    Security behaviors (S-prefixed) are reported exactly like the others. A
    security behavior the spec left MANUAL (e.g. access control with no stated
    who-sees-what) must be shown as MANUAL — never silently treated as PASS.
@@ -49,6 +54,9 @@ flaky or incorrect test — that false alarm is what makes a checker untrustwort
   requirement parts are unmet.
 - A confidence note flagging anything that might be a checker error rather than a
   code error — this is the human's gate against blindly trusting the checker.
+- A "⚠️ Findings (beyond the requirement)" list — the failed `probe` behaviors,
+  clearly marked as NOT part of the pass/fail verdict. Note the depth level the
+  tests were generated at (quick / standard / thorough / max).
 - If you ran the static advisory, a separate `Security advisory (static, <date>)`
   block — clearly marked as NOT part of the pass/fail verdict, and noting that a
   clean scan today is not a guarantee tomorrow (new issues get found over time).
