@@ -106,6 +106,8 @@ If a check fails, Litmus hands you a copy-paste summary to take back to your bui
 
 It remembers where each feature's code lives and re-uses its tests; change a requirement and it automatically rebuilds that feature's tests (it hashes the requirement to know).
 
+For checks that target a single function, name the spec after it and Litmus records the exact `function:` in its lock — so "which check covers `isProActive`?" is a one-line lookup in both directions.
+
 ## Test depth (basic → advanced)
 
 Add a depth word to control how hard Litmus probes (default **thorough**):

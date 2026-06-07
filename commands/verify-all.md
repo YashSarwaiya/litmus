@@ -92,7 +92,8 @@ The dashboard must never imply everything is fine when it isn't:
      generate or run anything for it.
    - Compute the current spec hash:
      `shasum -a 256 .claude/specs/<slug>.md | cut -d' ' -f1`.
-   - Read `.claude/verify/<slug>/source.lock` if present (`spec_hash`, `target`).
+   - Read `.claude/verify/<slug>/source.lock` if present (`spec_hash`, `target`,
+     `function`, `depth`).
      - missing lock, or missing/empty `behaviors.md`/`tests/` → needs a first-run
        build.
      - saved `spec_hash` ≠ current hash, `fresh` was passed, or the requested

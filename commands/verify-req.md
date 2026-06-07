@@ -54,6 +54,8 @@ Each feature keeps a tiny file `.claude/verify/<slug>/source.lock` with:
 - `spec_hash:` the SHA-256 of the spec file's full contents at the time its
   behaviors/tests were last generated.
 - `target:` the confirmed code location(s).
+- `function:` the exact function/symbol under test, when it's a single-function
+  check (blank otherwise) — makes "which check covers `foo`?" a direct lookup.
 - `depth:` the depth the tests were generated at (quick/standard/thorough/max).
 - `generated:` when they were generated.
 
@@ -87,7 +89,10 @@ again, and (b) tell whether the saved tests still match the current requirement.
      offer the choice: point you at the right file/folder, or build it first and
      come back. Do not run the check against unrelated code (that would produce
      misleading FAILs that just mean "this isn't the thing").
-   Whatever is used becomes the "target path(s)" for the steps below.
+   Whatever is used becomes the "target path(s)" for the steps below. If the spec
+   frontmatter has a `function:` (or the check clearly targets one
+   function/symbol), note that exact name too — pass it to the agents and record
+   it in `source.lock` so the check is precisely tied to that function.
 
    (Searching to find WHERE the code lives is fine — you are only locating
    paths. You still must not tell the subagents WHAT the code does or why.)
@@ -110,9 +115,10 @@ again, and (b) tell whether the saved tests still match the current requirement.
    the behaviors file path and the target path(s). It writes runnable tests into
    `.claude/verify/<slug>/tests/`. It may read the code for wiring (signatures,
    imports, how to invoke) but must NOT change the expected outcomes. Pass both
-   agents the depth level. After the tests exist, write
-   `.claude/verify/<slug>/source.lock` with the current `spec_hash`, the
-   `target`, the `depth`, and today's date.
+   agents the depth level and the `function` name (if any) so they target the
+   right symbol. After the tests exist, write `.claude/verify/<slug>/source.lock`
+   with the current `spec_hash`, the `target`, the `function` (if any), the
+   `depth`, and today's date.
 
 6. **Run (checker is not the fixer).** Launch the `verifier` agent and pass it
    the spec path, the behaviors path, the tests path, and the target path(s). It

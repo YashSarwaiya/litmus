@@ -25,7 +25,9 @@ $ARGUMENTS
 
 1. Derive a short, stable kebab-case `<slug>` from the requirement (e.g.
    `calculator-add-red`). Keep it memorable; the user will reuse it in
-   `/verify-req <slug>`.
+   `/verify-req <slug>`. **If this check targets a single function/unit, name the
+   slug after it** (e.g. `is-pro-active` for `isProActive`) so the spec file is
+   easy to find from the code and vice-versa.
 
 2. Create the spec file at `.claude/specs/<slug>.md` (run `mkdir -p
    .claude/specs` first if needed) with EXACTLY this shape:
@@ -35,6 +37,7 @@ $ARGUMENTS
    slug: <slug>
    created: <today's date, YYYY-MM-DD>
    status: draft
+   function: <exact function/symbol name if this check targets one, else blank>
    ---
 
    ## Requirement (verbatim — source of truth)
