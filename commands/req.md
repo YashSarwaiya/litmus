@@ -62,7 +62,8 @@ $ARGUMENTS
 5. **Security capture (only when relevant).** If the verbatim requirement
    contains any security trigger word — login, sign in, auth, user, account,
    password, token, session, upload, admin, role, payment, billing, email,
-   private, secret, key, API — then ask the user, in plain words: "This touches
+   private, secret, key, API, paid, pro, subscription, plan, access, permission,
+   entitlement, gate — then ask the user, in plain words: "This touches
    logins / data / secrets — want me to also check basic security?" If they say
    no, skip. If yes, ask 2–4 simple questions and append their answers
    **verbatim** under `## Security expectations`:
